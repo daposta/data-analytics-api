@@ -68,12 +68,9 @@ def sales_prediction():
         monthly_prediction = {}
         month = str(i[0]) if len(str(i[0])) > 1 else str('0'+ str(i[0]))
         last_day = i[1]
-        print(month, last_day)
         index_future_dates = pd.date_range(start=f'{str(year)}-{month}-1', end=f'{str(year)}-{month}-{str(last_day)}')
         prediction = model.predict(start=1, end=last_day, type='levels').rename('ARIMA Predictions')
-        print(index_future_dates)
         result = round(prediction[-1], 2)
-        print(result)
         end= f'{str(year)}-{month}-{str(last_day)}'
         predictions.append({ end: result})
 
