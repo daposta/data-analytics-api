@@ -82,13 +82,10 @@ def sales_prediction():
         # prediction = model.predict(df, start=start_date, end=end_date, type='levels').rename('ARIMA Predictions')
         result = round(prediction[-1], 2)
         # end= f'{str(year)}-{month}-{str(last_day)}'
-        
-        # month_data.append(month)
-        prediction_data.append(result)
-    print(prediction_data)
-    # return jsonify({'data':{
-    #     'months': month_data, 'sales':prediction_data
-    # }})
+        month_name = convert_month(month)
+
+        prediction_data.append({month_name:result})
+    
     return  jsonify({'data':prediction_data})
 
 ALLOWED_EXTENSIONS = set(['csv', ])
@@ -123,6 +120,35 @@ def upload_file():
         return resp
 
 
+def convert_month(month_num):
+    match month_num:
+        case '01':
+            return 'Jan'
+        case '02':
+            return 'February'
+        case '03':
+            return 'March'
+        case '04':
+            return 'April'
+        case '05':
+            return  'May'
+        case '06':
+            return 'June'
+        case '07':
+            return 'July'
+        case '08':
+            return 'August'
+
+        case '09':
+            return 'September'
+        case '10':
+            return 'October'
+        case '11':
+            return 'November'
+        case '12':
+            return'December'
+        case _:
+            return ''
 
 if __name__ == "__main__":
   app.run()
