@@ -74,18 +74,22 @@ def sales_prediction():
         monthly_prediction = {}
         month = str(i[0]) if len(str(i[0])) > 1 else str('0'+ str(i[0]))
         last_day = i[1]
-        index_future_dates = pd.date_range(start=f'{str(year)}-{month}-1', end=f'{str(year)}-{month}-{str(last_day)}')
-        prediction = model.predict(start=1, end=last_day, type='levels').rename('ARIMA Predictions')
+        # index_future_dates = pd.date_range(start=f'{str(year)}-{month}-1', end=f'{str(year)}-{month}-{str(last_day)}')
+        prediction = model.predict( start=1, end=last_day, type='levels').rename('ARIMA Predictions')
+        # start_date = f'{str(year)}-{month}-1'
+        # end_date = f'{str(year)}-{month}-{str(last_day)}'
+        # print(start_date, end_date)
+        # prediction = model.predict(df, start=start_date, end=end_date, type='levels').rename('ARIMA Predictions')
         result = round(prediction[-1], 2)
-        end= f'{str(year)}-{month}-{str(last_day)}'
+        # end= f'{str(year)}-{month}-{str(last_day)}'
         
-        month_data.append(month)
+        # month_data.append(month)
         prediction_data.append(result)
-
+    print(prediction_data)
     # return jsonify({'data':{
     #     'months': month_data, 'sales':prediction_data
     # }})
-    return  jsonify({'data':result})
+    return  jsonify({'data':prediction_data})
 
 ALLOWED_EXTENSIONS = set(['csv', ])
 
