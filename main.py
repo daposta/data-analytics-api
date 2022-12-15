@@ -26,7 +26,8 @@ def hello():
 
 @app.route("/sales-by-product")
 def sales_by_product():
-    df = pd.read_csv('sales.csv', usecols=["item", "sales"])
+    # df = pd.read_csv('sales.csv', usecols=["item", "sales"])
+    df = pd.read_csv(filename1, usecols=["item", "sales"])
     df = df.groupby('item', as_index=False)['sales'].sum()
     result = df.to_dict('records')
     data = [{'name':x['item'],'sales': x['sales'] } for x in result]
@@ -36,7 +37,8 @@ def sales_by_product():
 @app.route("/sales-by-year", methods = ['GET'])
 @cross_origin(origin='*')
 def sales_by_year():
-    df = pd.read_csv('sales.csv', usecols=["date", "sales"])
+    # df = pd.read_csv('sales.csv', usecols=["date", "sales"])
+    df = pd.read_csv(filename1, usecols=["date", "sales"])
     df["date"] = pd.to_datetime(df["date"])
     df['year'] = df['date'].dt.year
     df = df.groupby('year', as_index=False)['sales'].sum()
@@ -55,6 +57,7 @@ def sales_by_year():
 def sales_prediction():
     model = pickle.load(open('model.pkl','rb'))
     # df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
+    df = pd.read_csv(filename1, usecols=["quantity","discount","unit_price", "month", "sales"])
     #send data in a loop from month 1 to month with start date and end date for each month
     year = 2023
     month_items =  [x for x in range(1, 13)] #, key=lambda x:x[0])
@@ -79,10 +82,10 @@ def sales_prediction():
         month_data.append(month)
         prediction_data.append(result)
 
-    print(prediction_data)
-    return jsonify({'data':{
-        'months': month_data, 'sales':prediction_data
-    }})
+    # return jsonify({'data':{
+    #     'months': month_data, 'sales':prediction_data
+    # }})
+    return  jsonify({'data':result})
 
 ALLOWED_EXTENSIONS = set(['csv', ])
 
@@ -104,7 +107,7 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        filename1 = filename
+        global  filename1 = filename
         print('filename1  >>', filename1)
         resp = jsonify({'message' : 'File successfully uploaded'})
         resp.status_code = 201
