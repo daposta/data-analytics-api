@@ -107,7 +107,8 @@ def upload_file():
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        global  filename1 = filename
+        global  filename1 
+        filename1= filename
         print('filename1  >>', filename1)
         resp = jsonify({'message' : 'File successfully uploaded'})
         resp.status_code = 201
