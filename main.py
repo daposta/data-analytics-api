@@ -26,8 +26,8 @@ def hello():
 
 @app.route("/sales-by-product")
 def sales_by_product():
-    # df = pd.read_csv('sales.csv', usecols=["item", "sales"])
-    df = pd.read_csv(filename1, usecols=["item", "sales"])
+    df = pd.read_csv('sales.csv', usecols=["item", "sales"])
+    # df = pd.read_csv(filename1, usecols=["item", "sales"])
     df = df.groupby('item', as_index=False)['sales'].sum()
     result = df.to_dict('records')
     data = [{'name':x['item'],'sales': x['sales'] } for x in result]
@@ -37,8 +37,8 @@ def sales_by_product():
 @app.route("/sales-by-year", methods = ['GET'])
 @cross_origin(origin='*')
 def sales_by_year():
-    # df = pd.read_csv('sales.csv', usecols=["date", "sales"])
-    df = pd.read_csv(filename1, usecols=["date", "sales"])
+    df = pd.read_csv('sales.csv', usecols=["date", "sales"])
+    # df = pd.read_csv(filename1, usecols=["date", "sales"])
     df["date"] = pd.to_datetime(df["date"])
     df['year'] = df['date'].dt.year
     df = df.groupby('year', as_index=False)['sales'].sum()
@@ -56,8 +56,8 @@ def sales_by_year():
 # @cross_origin(origin='*')
 def sales_prediction():
     model = pickle.load(open('model.pkl','rb'))
-    # df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
-    df = pd.read_csv(filename1, usecols=["quantity","discount","unit_price", "month", "sales"])
+    df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
+    # df = pd.read_csv(filename1, usecols=["quantity","discount","unit_price", "month", "sales"])
     #send data in a loop from month 1 to month with start date and end date for each month
     year = 2023
     month_items =  [x for x in range(1, 13)] #, key=lambda x:x[0])
