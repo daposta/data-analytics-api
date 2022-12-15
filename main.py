@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request, redirect
 import pandas as pd
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
@@ -33,7 +33,8 @@ def sales_by_product():
     return  jsonify({'data': data})
 
 
-@app.route("/sales-by-year")
+@app.route("/sales-by-year", methods = ['GET'])
+@cross_origin(origin='*')
 def sales_by_year():
     df = pd.read_csv('sales.csv', usecols=["date", "sales"])
     df["date"] = pd.to_datetime(df["date"])
@@ -50,6 +51,7 @@ def sales_by_year():
 
 
 @app.route("/sales-prediction")
+# @cross_origin(origin='*')
 def sales_prediction():
     model = pickle.load(open('model.pkl','rb'))
     # df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
@@ -57,13 +59,14 @@ def sales_prediction():
     year = 2023
     month_items =  [x for x in range(1, 13)] #, key=lambda x:x[0])
     months_in_year = [] 
+    month_data = []
+    prediction_data = []
     for month in month_items:
         res = calendar.monthrange(year, month)
         # month = res[0]
         day = res[1]
         months_in_year.append((month, day) )
-    
-    predictions = []
+
     for i in months_in_year:
         monthly_prediction = {}
         month = str(i[0]) if len(str(i[0])) > 1 else str('0'+ str(i[0]))
@@ -72,11 +75,14 @@ def sales_prediction():
         prediction = model.predict(start=1, end=last_day, type='levels').rename('ARIMA Predictions')
         result = round(prediction[-1], 2)
         end= f'{str(year)}-{month}-{str(last_day)}'
-        predictions.append({ end: result})
+        
+        month_data.append(month)
+        prediction_data.append(result)
 
-    
-    print(predictions)
-    return jsonify({'data':predictions})
+    print(prediction_data)
+    return jsonify({'data':{
+        'months': month_data, 'sales':prediction_data
+    }})
 
 ALLOWED_EXTENSIONS = set(['csv', ])
 
