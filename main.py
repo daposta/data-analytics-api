@@ -150,5 +150,46 @@ def convert_month(month_num):
         case _:
             return ''
 
+
+
+
+
+
+@app.route("/sales-prediction-chart")
+# @cross_origin(origin='*')
+def sales_prediction_chart():
+    model = pickle.load(open('model.pkl','rb'))
+    df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
+    # df = pd.read_csv(filename1, usecols=["quantity","discount","unit_price", "month", "sales"])
+    #send data in a loop from month 1 to month with start date and end date for each month
+    year = 2023
+    month_items =  [x for x in range(1, 13)] #, key=lambda x:x[0])
+    months_in_year = [] 
+    month_data = []
+    prediction_data = []
+    for month in month_items:
+        res = calendar.monthrange(year, month)
+        # month = res[0]
+        day = res[1]
+        months_in_year.append((month, day) )
+
+    for i in months_in_year:
+        monthly_prediction = {}
+        month = str(i[0]) if len(str(i[0])) > 1 else str('0'+ str(i[0]))
+        last_day = i[1]
+        # index_future_dates = pd.date_range(start=f'{str(year)}-{month}-1', end=f'{str(year)}-{month}-{str(last_day)}')
+        prediction = model.predict( start=1, end=last_day, type='levels').rename('ARIMA Predictions')
+        # start_date = f'{str(year)}-{month}-1'
+        # end_date = f'{str(year)}-{month}-{str(last_day)}'
+        # print(start_date, end_date)
+        # prediction = model.predict(df, start=start_date, end=end_date, type='levels').rename('ARIMA Predictions')
+        result = round(prediction[-1], 2)
+        # end= f'{str(year)}-{month}-{str(last_day)}'
+        month_name = convert_month(month)
+
+        prediction_data.append({'month': month_name, 'sales':result})
+    
+    return  jsonify({'data':prediction_data})
+
 if __name__ == "__main__":
   app.run()
