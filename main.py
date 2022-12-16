@@ -84,7 +84,7 @@ def sales_prediction():
         # end= f'{str(year)}-{month}-{str(last_day)}'
         month_name = convert_month(month)
 
-        prediction_data.append({month_name:result})
+        prediction_data.append({'month': month_name, 'sales':result})
     
     return  jsonify({'data':prediction_data})
 
@@ -123,7 +123,7 @@ def upload_file():
 def convert_month(month_num):
     match month_num:
         case '01':
-            return 'Jan'
+            return 'January'
         case '02':
             return 'February'
         case '03':
