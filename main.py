@@ -26,8 +26,10 @@ def hello():
 
 @app.route("/sales-by-product")
 def sales_by_product():
-    df = pd.read_csv('sales.csv', usecols=["item", "sales"])
-    # df = pd.read_csv(filename1, usecols=["item", "sales"])
+    # df = pd.read_csv('sales.csv', usecols=["item", "sales"])
+    # global filename1
+    print('filename>.>', filename1)
+    df = pd.read_csv(filename1, usecols=["item", "sales"])
     df = df.groupby('item', as_index=False)['sales'].sum()
     result = df.to_dict('records')
     data = [{'name':x['item'],'sales': x['sales'] } for x in result]
@@ -37,8 +39,11 @@ def sales_by_product():
 @app.route("/sales-by-year", methods = ['GET'])
 @cross_origin(origin='*')
 def sales_by_year():
-    df = pd.read_csv('sales.csv', usecols=["date", "sales"])
-    # df = pd.read_csv(filename1, usecols=["date", "sales"])
+    # df = pd.read_csv('sales.csv', usecols=["date", "sales"])
+    # global filename1
+    df = pd.read_csv(filename1, usecols=["date", "sales"])
+    
+    
     df["date"] = pd.to_datetime(df["date"])
     df['year'] = df['date'].dt.year
     df = df.groupby('year', as_index=False)['sales'].sum()
@@ -105,12 +110,26 @@ def upload_file():
         resp = jsonify({'message' : 'No file selected for uploading'})
         resp.status_code = 400
         return resp
+    # check if headers we need exist
+    # df = pd.read_csv(request.files['file'])
+    # list_of_column_names = list(df.columns)
+    # if not 'date' and 'sales' and 'item' in list_of_column_names:
+    #     resp = jsonify({'message' : 'Required headers sales/item/date are missing'})
+    #     resp.status_code = 400
+    #     return resp
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        df = pd.read_csv(filename)
+        list_of_column_names = list(df.columns)
+        print('list_of_column_names>>', list_of_column_names)
+        if not ('date' and 'sales' and 'item') in list_of_column_names:
+            resp = jsonify({'message' : 'Required headers sales/item/date are missing'})
+            resp.status_code = 400
+            return resp
         global  filename1 
         filename1= filename
-        print('filename1  >>', filename1)
+        # print('filename1  >>', filename1)
         resp = jsonify({'message' : 'File successfully uploaded'})
         resp.status_code = 201
         return resp
