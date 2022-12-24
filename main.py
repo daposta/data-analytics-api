@@ -26,10 +26,8 @@ def hello():
 
 @app.route("/sales-by-product")
 def sales_by_product():
-    # df = pd.read_csv('sales.csv', usecols=["item", "sales"])
-    # global filename1
-    print('filename>.>', filename1)
-    df = pd.read_csv(filename1, usecols=["item", "sales"])
+    df = pd.read_csv(filename1, usecols= lambda x: x.lower() in ["item", "sales"])
+    df.columns = df.columns.str.lower() #convert headers to lowercase
     df = df.groupby('item', as_index=False)['sales'].sum()
     result = df.to_dict('records')
     data = [{'name':x['item'],'sales': x['sales'] } for x in result]
@@ -41,9 +39,8 @@ def sales_by_product():
 def sales_by_year():
     # df = pd.read_csv('sales.csv', usecols=["date", "sales"])
     # global filename1
-    df = pd.read_csv(filename1, usecols=["date", "sales"])
-    
-    
+    df = pd.read_csv(filename1, usecols=lambda x: x.lower() in ["date", "sales"])
+    df.columns = df.columns.str.lower()
     df["date"] = pd.to_datetime(df["date"])
     df['year'] = df['date'].dt.year
     df = df.groupby('year', as_index=False)['sales'].sum()
@@ -61,7 +58,7 @@ def sales_by_year():
 # @cross_origin(origin='*')
 def sales_prediction():
     model = pickle.load(open('model.pkl','rb'))
-    df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
+    # df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
     # df = pd.read_csv(filename1, usecols=["quantity","discount","unit_price", "month", "sales"])
     #send data in a loop from month 1 to month with start date and end date for each month
     year = 2023
@@ -79,14 +76,8 @@ def sales_prediction():
         monthly_prediction = {}
         month = str(i[0]) if len(str(i[0])) > 1 else str('0'+ str(i[0]))
         last_day = i[1]
-        # index_future_dates = pd.date_range(start=f'{str(year)}-{month}-1', end=f'{str(year)}-{month}-{str(last_day)}')
-        prediction = model.predict( start=1, end=last_day, type='levels').rename('ARIMA Predictions')
-        # start_date = f'{str(year)}-{month}-1'
-        # end_date = f'{str(year)}-{month}-{str(last_day)}'
-        # print(start_date, end_date)
-        # prediction = model.predict(df, start=start_date, end=end_date, type='levels').rename('ARIMA Predictions')
+        prediction = model.predict( start=1, end=last_day, type='levels').rename('ARIMA Predictions') 
         result = round(prediction[-1], 2)
-        # end= f'{str(year)}-{month}-{str(last_day)}'
         month_name = convert_month(month)
 
         prediction_data.append({'month': month_name, 'sales':result})
@@ -110,26 +101,19 @@ def upload_file():
         resp = jsonify({'message' : 'No file selected for uploading'})
         resp.status_code = 400
         return resp
-    # check if headers we need exist
-    # df = pd.read_csv(request.files['file'])
-    # list_of_column_names = list(df.columns)
-    # if not 'date' and 'sales' and 'item' in list_of_column_names:
-    #     resp = jsonify({'message' : 'Required headers sales/item/date are missing'})
-    #     resp.status_code = 400
-    #     return resp
+    
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         df = pd.read_csv(filename)
-        list_of_column_names = list(df.columns)
-        print('list_of_column_names>>', list_of_column_names)
+        list_of_column_names =[x.lower() for x in  list(df.columns)]
         if not ('date' and 'sales' and 'item') in list_of_column_names:
+            os.remove(filename)
             resp = jsonify({'message' : 'Required headers sales/item/date are missing'})
             resp.status_code = 400
             return resp
         global  filename1 
         filename1= filename
-        # print('filename1  >>', filename1)
         resp = jsonify({'message' : 'File successfully uploaded'})
         resp.status_code = 201
         return resp
@@ -178,13 +162,11 @@ def convert_month(month_num):
 # @cross_origin(origin='*')
 def sales_prediction_chart():
     model = pickle.load(open('model.pkl','rb'))
-    df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
-    # df = pd.read_csv(filename1, usecols=["quantity","discount","unit_price", "month", "sales"])
+    # df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
     #send data in a loop from month 1 to month with start date and end date for each month
     year = 2023
     month_items =  [x for x in range(1, 13)] #, key=lambda x:x[0])
     months_in_year = [] 
-    month_data = []
     prediction_data = []
     for month in month_items:
         res = calendar.monthrange(year, month)
@@ -193,17 +175,10 @@ def sales_prediction_chart():
         months_in_year.append((month, day) )
 
     for i in months_in_year:
-        monthly_prediction = {}
         month = str(i[0]) if len(str(i[0])) > 1 else str('0'+ str(i[0]))
         last_day = i[1]
-        # index_future_dates = pd.date_range(start=f'{str(year)}-{month}-1', end=f'{str(year)}-{month}-{str(last_day)}')
         prediction = model.predict( start=1, end=last_day, type='levels').rename('ARIMA Predictions')
-        # start_date = f'{str(year)}-{month}-1'
-        # end_date = f'{str(year)}-{month}-{str(last_day)}'
-        # print(start_date, end_date)
-        # prediction = model.predict(df, start=start_date, end=end_date, type='levels').rename('ARIMA Predictions')
         result = round(prediction[-1], 2)
-        # end= f'{str(year)}-{month}-{str(last_day)}'
         month_name = convert_month(month)
 
         prediction_data.append({'month': month_name, 'sales':result})
