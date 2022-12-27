@@ -26,11 +26,11 @@ def hello():
 
 @app.route("/sales-by-product")
 def sales_by_product():
-    df = pd.read_csv(filename1, usecols= lambda x: x.lower() in ["item", "sales"])
+    df = pd.read_csv(filename1, usecols= lambda x: x.lower() in ["item", "amount"])
     df.columns = df.columns.str.lower() #convert headers to lowercase
-    df = df.groupby('item', as_index=False)['sales'].sum()
+    df = df.groupby('item', as_index=False)['amount'].sum()
     result = df.to_dict('records')
-    data = [{'name':x['item'],'sales': x['sales'] } for x in result]
+    data = [{'name':x['item'],'amount': x['amount'] } for x in result]
     return  jsonify({'data': data})
 
 
@@ -39,17 +39,17 @@ def sales_by_product():
 def sales_by_year():
     # df = pd.read_csv('sales.csv', usecols=["date", "sales"])
     # global filename1
-    df = pd.read_csv(filename1, usecols=lambda x: x.lower() in ["date", "sales"])
+    df = pd.read_csv(filename1, usecols=lambda x: x.lower() in ["date", "amount"])
     df.columns = df.columns.str.lower()
     df["date"] = pd.to_datetime(df["date"])
     df['year'] = df['date'].dt.year
-    df = df.groupby('year', as_index=False)['sales'].sum()
+    df = df.groupby('year', as_index=False)['amount'].sum()
     result = df.to_dict('records')
     # data = [{'year':x['year'],'sales': x['sales'] } for x in result]
     year_data =  [x['year'] for x in result]
-    sales_data =  [x['sales']  for x in result]
+    sales_data =  [x['amount']  for x in result]
     return jsonify({'data': {
-        'years': year_data, 'sales':sales_data
+        'years': year_data, 'amount':sales_data
     }})
 
 
@@ -61,10 +61,9 @@ def sales_prediction():
     # df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
     # df = pd.read_csv(filename1, usecols=["quantity","discount","unit_price", "month", "sales"])
     #send data in a loop from month 1 to month with start date and end date for each month
-    year = 2023
+    year  = request.args.get('year', default = 2023, type = int)
     month_items =  [x for x in range(1, 13)] #, key=lambda x:x[0])
     months_in_year = [] 
-    month_data = []
     prediction_data = []
     for month in month_items:
         res = calendar.monthrange(year, month)
@@ -73,7 +72,6 @@ def sales_prediction():
         months_in_year.append((month, day) )
 
     for i in months_in_year:
-        monthly_prediction = {}
         month = str(i[0]) if len(str(i[0])) > 1 else str('0'+ str(i[0]))
         last_day = i[1]
         prediction = model.predict( start=1, end=last_day, type='levels').rename('ARIMA Predictions') 
@@ -107,9 +105,9 @@ def upload_file():
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         df = pd.read_csv(filename)
         list_of_column_names =[x.lower() for x in  list(df.columns)]
-        if not ('date' and 'sales' and 'item') in list_of_column_names:
+        if not ('date' and 'amount' and 'item') in list_of_column_names:
             os.remove(filename)
-            resp = jsonify({'message' : 'Required headers sales/item/date are missing'})
+            resp = jsonify({'message' : 'Required headers amount/item/date are missing'})
             resp.status_code = 400
             return resp
         global  filename1 
@@ -159,12 +157,12 @@ def convert_month(month_num):
 
 
 @app.route("/sales-prediction-chart")
-# @cross_origin(origin='*')
+
 def sales_prediction_chart():
     model = pickle.load(open('model.pkl','rb'))
     # df = pd.read_csv('sales.csv', usecols=["quantity","discount","unit_price", "month", "sales"])
     #send data in a loop from month 1 to month with start date and end date for each month
-    year = 2023
+    year  = request.args.get('year', default = 2023, type = int)
     month_items =  [x for x in range(1, 13)] #, key=lambda x:x[0])
     months_in_year = [] 
     prediction_data = []
