@@ -16,7 +16,7 @@ CORS(app)
 UPLOAD_FOLDER = os.getcwd() #"C:/Users/Developer/Documents/Daposta/study/analytics-project"
 app.secret_key = "secret key"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 102
+# app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 102
 filename1 = ''
 
 @app.route("/")
@@ -26,8 +26,10 @@ def hello():
 
 @app.route("/sales-by-product")
 def sales_by_product():
-    df = pd.read_csv(filename1, usecols= lambda x: x.lower() in ["item", "amount"])
+    df = pd.read_csv(filename1, usecols= lambda x: x.lower() in ["item", "amount", "sales"])
     df.columns = df.columns.str.lower() #convert headers to lowercase
+    if not 'amount' in df.columns and 'sales' in df.columns: #if amount is missing try using sales
+        df['amount'] = df['sales']
     df = df.groupby('item', as_index=False)['amount'].sum()
     result = df.to_dict('records')
     data = [{'name':x['item'],'amount': x['amount'] } for x in result]
@@ -39,8 +41,10 @@ def sales_by_product():
 def sales_by_year():
     # df = pd.read_csv('sales.csv', usecols=["date", "sales"])
     # global filename1
-    df = pd.read_csv(filename1, usecols=lambda x: x.lower() in ["date", "amount"])
+    df = pd.read_csv(filename1, usecols=lambda x: x.lower() in ["date", "amount","sales"])
     df.columns = df.columns.str.lower()
+    if not 'amount' in df.columns and 'sales' in df.columns:
+        df['amount'] = df['sales']
     df["date"] = pd.to_datetime(df["date"])
     df['year'] = df['date'].dt.year
     df = df.groupby('year', as_index=False)['amount'].sum()
@@ -105,7 +109,7 @@ def upload_file():
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         df = pd.read_csv(filename)
         list_of_column_names =[x.lower() for x in  list(df.columns)]
-        if not ('date' and 'amount' and 'item') in list_of_column_names:
+        if not ('date' and ('amount' or 'sales') and 'item') in list_of_column_names:
             os.remove(filename)
             resp = jsonify({'message' : 'Required headers amount/item/date are missing'})
             resp.status_code = 400
